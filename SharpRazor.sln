@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpRazor", "SharpRazor\SharpRazor.csproj", "{6FC36F8D-068E-4306-ACE0-F29D1A05ACDA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpRazor.Tests", "SharpRazor.Tests\SharpRazor.Tests.csproj", "{CFDBF55B-8B91-4015-AE72-5B4285305257}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6FC36F8D-068E-4306-ACE0-F29D1A05ACDA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6FC36F8D-068E-4306-ACE0-F29D1A05ACDA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6FC36F8D-068E-4306-ACE0-F29D1A05ACDA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6FC36F8D-068E-4306-ACE0-F29D1A05ACDA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CFDBF55B-8B91-4015-AE72-5B4285305257}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CFDBF55B-8B91-4015-AE72-5B4285305257}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CFDBF55B-8B91-4015-AE72-5B4285305257}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CFDBF55B-8B91-4015-AE72-5B4285305257}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
