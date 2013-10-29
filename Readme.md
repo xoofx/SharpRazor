@@ -17,8 +17,8 @@ Output:
 **SharpRazor** provides the following features:
 
  - Simple and easy interface, with a single entry point `Razorizer` class and mainly two methods:
-   - `Razorizer.Parse` to directly parse a template 
-   - `Razorizer.Compile` to precompile template page.
+  - `Razorizer.Parse` to directly parse a template 
+  - `Razorizer.Compile` to precompile template page
  - C# Code Language and HTML Markup Language
  - [MVC3 Model](http://weblogs.asp.net/scottgu/archive/2010/10/19/asp-net-mvc-3-new-model-directive-support-in-razor.aspx) aka `@model` directive 
  - [MVC3 Layout](http://weblogs.asp.net/scottgu/archive/2010/10/22/asp-net-mvc-3-layouts.aspx) and [Sections](http://weblogs.asp.net/scottgu/archive/2010/12/30/asp-net-mvc-3-layouts-and-sections-with-razor.aspx)
@@ -29,9 +29,7 @@ Output:
  - Compatible with `.NET 4.5+` and `System.Web.Razor 3.0`
 
 ## Available from Nuget 
-You can download **SharpRazor** binaries directly from [nuget].
+You can download **SharpRazor** binaries directly from [nuget](www.nuget.org/packages?q=sharprazor).
 
 ## License
 MIT
-
-
