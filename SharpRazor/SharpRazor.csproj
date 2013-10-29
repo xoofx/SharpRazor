@@ -45,6 +45,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AttributeValue.cs" />
+    <Compile Include="TemplateParsingException.cs" />
     <Compile Include="DynamicAnonymousObject.cs" />
     <Compile Include="CompilerServiceUtility.cs" />
     <Compile Include="CSharp\CSharpCodeParser.cs" />
@@ -58,6 +59,7 @@
     <Compile Include="PageTemplate.cs" />
     <Compile Include="LambdaWriter.cs" />
     <Compile Include="PageTemplateContext.cs" />
+    <Compile Include="TemplateCompilationException.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

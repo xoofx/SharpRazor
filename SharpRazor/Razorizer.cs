@@ -39,6 +39,13 @@ using SharpRazor.CSharp;
 namespace SharpRazor
 {
     /// <summary>
+    /// Resolves a template by its name.
+    /// </summary>
+    /// <param name="templateName">Name of the template.</param>
+    /// <returns>The template resolved or null if not resolved.</returns>
+    public delegate PageTemplate TemplateResolverDelegate(string templateName);
+
+    /// <summary>
     /// Provides methods for templating text in-memory using Razor.
     /// </summary>
     public class Razorizer
@@ -126,6 +133,12 @@ namespace SharpRazor
         }
 
         /// <summary>
+        /// Gets or sets the template resolver. The template resolver takes 
+        /// </summary>
+        /// <value>The template resolver.</value>
+        public TemplateResolverDelegate TemplateResolver { get; set; } 
+
+        /// <summary>
         /// Gets or sets the default file extension. Default is: .cshtml
         /// </summary>
         /// <value>The default file extension.</value>
@@ -172,7 +185,7 @@ namespace SharpRazor
                 generatedPageTemplateTypes.TryGetValue(templateName, out pageTemplateType);
             }
 
-            return pageTemplateType != null ? NewPageTemplate(pageTemplateType) : null;
+            return pageTemplateType != null ? NewPageTemplate(pageTemplateType) : TemplateResolver != null ? TemplateResolver(templateName) : null;
         }
 
         /// <summary>
@@ -299,14 +312,7 @@ namespace SharpRazor
         /// <param name="errors">The errors.</param>
         protected virtual void OnCompilerErrors(List<CompilerError> errors)
         {
-            var errorText = new StringBuilder();
-            errorText.AppendLine("Error when compiling page:");
-            foreach (var error in errors)
-            {
-                errorText.AppendFormat("{0}({1},{2}): error {3}: {4}", error.FileName, error.Line, error.Column, error.ErrorNumber, error.ErrorText);
-                errorText.AppendLine();
-            }
-            throw new InvalidOperationException(errorText.ToString());
+            throw new TemplateCompilationException(errors);
         }
 
         /// <summary>
@@ -317,15 +323,7 @@ namespace SharpRazor
         /// <param name="errors">The errors.</param>
         protected virtual void OnCodeGeneratorErrors(string templateFileName, List<RazorError> errors)
         {
-            var errorText = new StringBuilder();
-            errorText.AppendLine("Error when generating Razor code:");
-            foreach (var error in errors)
-            {
-                errorText.AppendFormat("{0}({1},{2}): error {3}: {4}", templateFileName, error.Location.LineIndex + 1, error.Location.CharacterIndex + 1, "R0000", error.Message);
-                errorText.AppendLine();
-            }
-
-            throw new InvalidOperationException(errorText.ToString());
+            throw new TemplateParsingException(templateFileName, errors);
         }
 
         /// <summary>

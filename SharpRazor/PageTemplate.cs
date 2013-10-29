@@ -145,6 +145,22 @@ namespace SharpRazor
         }
 
         /// <summary>
+        /// Includes the template with the specified name.
+        /// </summary>
+        /// <param name="cacheName">The name of the template type in cache.</param>
+        /// <param name="model">The model or NULL if there is no model for the template.</param>
+        /// <returns>The template writer helper.</returns>
+        public virtual LambdaWriter Include(string cacheName, object model = null)
+        {
+            var instance = Razorizer.FindTemplate(cacheName);
+            if (instance == null)
+                throw new ArgumentException("No template could be resolved with name '" + cacheName + "'");
+
+            instance.Model = model ?? Model;
+            return new LambdaWriter(tw => tw.Write(instance.Run()));
+        }
+
+        /// <summary>
         /// Runs the templating.
         /// </summary>
         /// <returns>The result of templating.</returns>
