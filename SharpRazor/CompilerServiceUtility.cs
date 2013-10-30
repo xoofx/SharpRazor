@@ -97,19 +97,25 @@ namespace SharpRazor
         private static readonly Type EnumeratorType = typeof(IEnumerator);
         #endregion
 
-        public static bool IsImplementingGenericType(Type type, Type genericType)
+
+        public static Type GetGenericType(Type type, Type genericTypeDefinition)
         {
             if (type == null) throw new ArgumentNullException("type");
-            if (genericType == null) throw new ArgumentNullException("genericType");
+            if (genericTypeDefinition == null) throw new ArgumentNullException("genericType");
 
-            if (!genericType.IsGenericTypeDefinition)
+            if (!genericTypeDefinition.IsGenericTypeDefinition)
                 throw new ArgumentException("Expecting a generic definition", "genericType");
 
             for (Type t = type; t != null; t = t.BaseType)
-                if (t.IsGenericType && t.GetGenericTypeDefinition() == genericType)
-                    return true;
+                if (t.IsGenericType && t.GetGenericTypeDefinition() == genericTypeDefinition)
+                    return t;
 
-            return false;
+            return null;
+        }
+
+        public static bool IsImplementingGenericType(Type type, Type genericTypeDefinition)
+        {
+            return GetGenericType(type, genericTypeDefinition) != null;
         }
 
         #region Methods

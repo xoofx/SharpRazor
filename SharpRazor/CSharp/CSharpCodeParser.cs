@@ -160,13 +160,25 @@ namespace SharpRazor.CSharp
                 this.genericTypeFormat = genericTypeFormat;
             }
 
-            protected override string ResolveType(CodeGeneratorContext context, string baseType)
+            protected override string ResolveType(CodeGeneratorContext context, string modelType)
             {
+                var host = (RazorizerEngineHost) context.Host;
+
+                if (!host.DefaultBaseTemplateType.IsGenericType)
+                {
+                    if (host.DefaultModelType.FullName == modelType)
+                    {
+                        return host.DefaultBaseTemplateType.FullName;
+                    }
+
+                    throw new InvalidOperationException(string.Format("Cannot change model type to [{0}] when base template type is non-generic [{1}]", modelType, host.DefaultBaseTemplateType));
+                }
+
                 return String.Format(
                     CultureInfo.InvariantCulture,
                     genericTypeFormat,
                     context.Host.DefaultBaseClass,
-                    baseType);
+                    modelType);
             }
 
             public override bool Equals(object obj)

@@ -50,7 +50,7 @@ namespace SharpRazor
     /// </summary>
     public class Razorizer
     {
-        private const string DefaultNamespaceForCompiledPageTemplate = "SharpRazor.Dynamic";
+        private const string DefaultNamespaceForCompiledPageTemplate = "SharpRazorDynamic";
         private readonly Dictionary<string, Type> generatedPageTemplateTypes = new Dictionary<string, Type>();
         private readonly HashSet<IRazorizerLanguageProvider> languageProviders;
         private string defaultFileExtension;
@@ -81,7 +81,7 @@ namespace SharpRazor
             PageTemplateType = pageTemplateType;
 
             // Register default namespaces
-            NameSpaces = new HashSet<string>()
+            Namespaces = new HashSet<string>()
             {
                 "System",
                 "System.Collections.Generic",
@@ -121,7 +121,13 @@ namespace SharpRazor
         /// Gets the namespaces to use when compiling a <see cref="PageTemplate"/>.
         /// </summary>
         /// <value>The name spaces.</value>
-        public HashSet<string> NameSpaces { get; private set; }
+        public HashSet<string> Namespaces { get; private set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether [include debug information].
+        /// </summary>
+        /// <value><c>true</c> if [include debug information]; otherwise, <c>false</c>.</value>
+        public bool IncludeDebugInformation { get; set; }
 
         /// <summary>
         /// Gets the language providers registered.
@@ -185,7 +191,7 @@ namespace SharpRazor
                 generatedPageTemplateTypes.TryGetValue(templateName, out pageTemplateType);
             }
 
-            return pageTemplateType != null ? NewPageTemplate(pageTemplateType) : TemplateResolver != null ? TemplateResolver(templateName) : null;
+            return pageTemplateType != null ? NewPageTemplate(templateName, pageTemplateType) : TemplateResolver != null ? TemplateResolver(templateName) : null;
         }
 
         /// <summary>
@@ -306,35 +312,15 @@ namespace SharpRazor
         }
 
         /// <summary>
-        /// Called in case of compiler errors. By default throws a <see cref="InvalidOperationException"/>.
-        /// Override this method to customize handling of compiler errors.
-        /// </summary>
-        /// <param name="errors">The errors.</param>
-        protected virtual void OnCompilerErrors(List<CompilerError> errors)
-        {
-            throw new TemplateCompilationException(errors);
-        }
-
-        /// <summary>
-        /// Called in case of razor code generator errors. By default throws a <see cref="InvalidOperationException"/>.
-        /// Override this method to customize handling of razor code generator errors.
-        /// </summary>
-        /// <param name="templateFileName">Name of the template file being processed.</param>
-        /// <param name="errors">The errors.</param>
-        protected virtual void OnCodeGeneratorErrors(string templateFileName, List<RazorError> errors)
-        {
-            throw new TemplateParsingException(templateFileName, errors);
-        }
-
-        /// <summary>
         /// Creates a new instance of <see cref="PageTemplate"/> based on the type. Override this method to customize how to instantiate generated <see cref="PageTemplate"/>.
         /// </summary>
         /// <param name="pageTemplateType">Type of the page template.</param>
         /// <returns>A new instance of <see cref="PageTemplate"/>.</returns>
-        protected virtual PageTemplate NewPageTemplate(Type pageTemplateType)
+        protected virtual PageTemplate NewPageTemplate(string pageTemplateName, Type pageTemplateType)
         {
             var pageTemplate = (PageTemplate)Activator.CreateInstance(pageTemplateType);
             pageTemplate.Razorizer = this;
+            pageTemplate.PageName = pageTemplateName;
             return pageTemplate;
         }
 
@@ -344,21 +330,17 @@ namespace SharpRazor
             var result = GeneratePageTemplateCode(templateContent, templateFileName, modelType, languageProvider, out templateClassName);
             if (!result.Success)
             {
-                OnCodeGeneratorErrors(templateFileName, result.ParserErrors.ToList());
-            }
-            else
-            {
-                // Add the dynamic model attribute if the type is an anonymous type.
-                var type = result.GeneratedCode.Namespaces[0].Types[0];
-                var hasDynamicModel = (modelType != null && CompilerServicesUtility.IsAnonymousType(modelType));
-
-                // Generate any constructors required by the base template type.
-                GenerateConstructors(CompilerServicesUtility.GetConstructors(PageTemplateType), type, hasDynamicModel);
-
-                return CompilePageTemplateCode(templateClassName, result.GeneratedCode, languageProvider.CreateCodeDomProvider());
+                throw new TemplateParsingException(templateFileName, result.ParserErrors.ToList());
             }
 
-            return null;
+            // Add the dynamic model attribute if the type is an anonymous type.
+            var type = result.GeneratedCode.Namespaces[0].Types[0];
+            var hasDynamicModel = (modelType != null && CompilerServicesUtility.IsAnonymousType(modelType));
+
+            // Generate any constructors required by the base template type.
+            GenerateConstructors(CompilerServicesUtility.GetConstructors(PageTemplateType), type, hasDynamicModel);
+
+            return CompilePageTemplateCode(templateClassName, result.GeneratedCode, languageProvider.CreateCodeDomProvider());
         }
 
         private GeneratorResults GeneratePageTemplateCode(string templateContent, string templateFileName, Type modelType, IRazorizerLanguageProvider languageProvider, out string templateFullClassName)
@@ -382,6 +364,9 @@ namespace SharpRazor
                 }
             };
 
+            foreach (var ns in Namespaces)
+                host.NamespaceImports.Add(ns);
+
             templateFullClassName = host.DefaultNamespace + "." + host.DefaultClassName;
 
             var templateEngine = new RazorTemplateEngine(host);
@@ -394,12 +379,11 @@ namespace SharpRazor
         private Type CompilePageTemplateCode(string templateClassName, CodeCompileUnit codeCompileUnit, CodeDomProvider codeDomProvider)
         {
             // Generate the code and put it in the text box:
-            // TODO: output this text somewhere?
             string code;
-            using (StringWriter sw = new StringWriter())
+            using (var writer = new StringWriter())
             {
-                codeDomProvider.GenerateCodeFromCompileUnit(codeCompileUnit, sw, new CodeGeneratorOptions());
-                code = sw.ToString();
+                codeDomProvider.GenerateCodeFromCompileUnit(codeCompileUnit, writer, new CodeGeneratorOptions());
+                code = writer.ToString();
             }
 
             // Filter assemblies: Remove dynamics, check location, remove duplicated versions (taking latest)
@@ -411,22 +395,17 @@ namespace SharpRazor
 
 
             // Compile an assembly in-memory
-            var compilerParameters = new CompilerParameters(assemblyNames) { GenerateInMemory = true };
+            var compilerParameters = new CompilerParameters(assemblyNames) { GenerateInMemory = true, IncludeDebugInformation = true };
             var results = codeDomProvider.CompileAssemblyFromDom(compilerParameters, codeCompileUnit);
 
             // Handle errors here.
-            Type pageTemplateType = null;
             if (results.Errors.HasErrors)
             {
-                OnCompilerErrors(results.Errors.OfType<CompilerError>().ToList());
-            }
-            else
-            {
-                var assembly = results.CompiledAssembly;
-                pageTemplateType = assembly.GetType(templateClassName);
+                throw new TemplateCompilationException(code, results.Errors.OfType<CompilerError>().ToList());
             }
 
-            return pageTemplateType;
+            var assembly = results.CompiledAssembly;
+            return assembly.GetType(templateClassName);
         }
         
         private PageTemplate CompileOrCreatePageTemplate(string templateName, string templateContent, string templateFileName, Type modelType)
@@ -440,7 +419,7 @@ namespace SharpRazor
                 throw new InvalidOperationException("Unable to create a template type. Check errors");
             }
 
-            return NewPageTemplate(templateType);
+            return NewPageTemplate(templateName, templateType);
         }
 
         private Type GetOrCompilePageTemplateType(string templateName, string templateContent, string templateFileName, Type modelType)
@@ -462,16 +441,24 @@ namespace SharpRazor
                 throw new ArgumentException(string.Format("Unable to find a registered Language Provider for extension [{0}]", fileExtension), "templateFileName");
             }
 
-            // Check that the model type can be used with the page template
-            if (modelType != null && !PageTemplateType.IsGenericTypeDefinition)
-            {
-                throw new ArgumentException(string.Format("Cannot use ModelType [{0}] when the PageTemplateType [{1}] is already setting the model type", modelType, PageTemplateType));
-            }
-
-            // Use an object type in case of a null model type
+            // If model type is null
             if (modelType == null)
             {
-                modelType = typeof(object);
+                if (!PageTemplateType.IsGenericTypeDefinition)
+                {
+                    // If PageTemplateType is not generic, then extract the implicit model type
+                    var pageTemplateGenericType = CompilerServicesUtility.GetGenericType(PageTemplateType, typeof (PageTemplate<>));
+                    modelType = pageTemplateGenericType.GetGenericArguments()[0];
+                }
+                else
+                {
+                    modelType = typeof (object);
+                }
+            }
+            else if (!PageTemplateType.IsGenericTypeDefinition)
+            {
+                // Check that the model type can be used with the page template
+                throw new ArgumentException(string.Format("Cannot use ModelType [{0}] when the PageTemplateType [{1}] is already setting the model type", modelType, PageTemplateType));
             }
 
             // When template name is null, generate a generic template name

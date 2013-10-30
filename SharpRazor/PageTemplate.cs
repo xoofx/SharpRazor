@@ -38,6 +38,12 @@ namespace SharpRazor
         }
 
         /// <summary>
+        /// Gets the name of this page.
+        /// </summary>
+        /// <value>The name of the page.</value>
+        public string PageName { get; internal set; }
+
+        /// <summary>
         /// Gets or sets the currnt layout template.
         /// </summary>
         /// <value>The currnt layout template.</value>
@@ -187,34 +193,42 @@ namespace SharpRazor
         /// <exception cref="System.InvalidOperationException">If a layout was not found</exception>
         public virtual string Run(PageTemplateContext context)
         {
-            var writer = new StringWriter();
-
-            // Execute this template
-            Context = context;
-            Writer = writer;
-            Execute();
-            Writer = null;
-            Context = null;
-
-            // If we are in a layout context, use the current layout
-            if (Layout != null)
+            try
             {
-                // Get the layout template.
-                var layout = FindTemplate(Layout);
+                var writer = new StringWriter();
 
-                if (layout == null)
+                // Execute this template
+                Context = context;
+                Writer = writer;
+                Execute();
+                Writer = null;
+                Context = null;
+
+                // If we are in a layout context, use the current layout
+                if (Layout != null)
                 {
-                    throw new InvalidOperationException(string.Format("Layout [{0}] was not found in registered template", Layout));
+                    // Get the layout template.
+                    var layout = FindTemplate(Layout);
+
+                    if (layout == null)
+                    {
+                        throw new InvalidOperationException(
+                            string.Format("Layout [{0}] was not found in registered template", Layout));
+                    }
+
+                    // Push the current body instance onto the stack for later execution.
+                    var layoutWriter = new LambdaWriter(tw => tw.Write(writer.ToString()));
+                    context.PushBody(layoutWriter);
+
+                    return layout.Run(context);
                 }
 
-                // Push the current body instance onto the stack for later execution.
-                var layoutWriter = new LambdaWriter(tw => tw.Write(writer.ToString()));
-                context.PushBody(layoutWriter);
-
-                return layout.Run(context);
+                return writer.ToString();
             }
-
-            return writer.ToString();
+            catch (Exception ex)
+            {
+                throw;
+            }
         }
 
         /// <summary>
@@ -256,6 +270,8 @@ namespace SharpRazor
         protected virtual void WriteTo(TextWriter writer, object val)
         {
             if (writer == null) throw new ArgumentNullException("writer");
+
+            if (val == null) return;
 
             WriteLiteralTo(writer, WebUtility.HtmlEncode(val.ToString()));
         }

@@ -30,15 +30,27 @@ namespace SharpRazor
     /// </summary>
     public class TemplateCompilationException : Exception
     {
+        private readonly string sourceCode;
         private readonly List<CompilerError> errors;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TemplateCompilationException"/> class.
+        /// Initializes a new instance of the <see cref="TemplateCompilationException" /> class.
         /// </summary>
+        /// <param name="sourceCode">The source code.</param>
         /// <param name="errors">The errors.</param>
-        public TemplateCompilationException(List<CompilerError> errors) : base(FormatErrors(errors))
+        public TemplateCompilationException(string sourceCode, List<CompilerError> errors) : base(FormatErrors(errors))
         {
+            this.sourceCode = sourceCode;
             this.errors = errors;
+        }
+
+        /// <summary>
+        /// Gets the source code used for compilation.
+        /// </summary>
+        /// <value>The source code.</value>
+        public string SourceCode
+        {
+            get { return sourceCode; }
         }
 
         /// <summary>
