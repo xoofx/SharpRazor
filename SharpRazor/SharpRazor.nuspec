@@ -26,7 +26,7 @@
     <version>1.2</version>
     <authors>Alexandre Mutel</authors>
     <owners>Alexandre Mutel</owners>
-    <licenseUrl>https://github.com/xoofx/SharpRazor/License.txt</licenseUrl>
+    <licenseUrl>https://github.com/xoofx/SharpRazor/blob/master/License.txt</licenseUrl>
     <projectUrl>https://github.com/xoofx/SharpRazor</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <summary>A lightweight templating system using Razor syntax.</summary>
