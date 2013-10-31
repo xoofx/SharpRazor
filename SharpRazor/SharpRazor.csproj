@@ -45,6 +45,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AttributeValue.cs" />
+    <Compile Include="HtmlRawString.cs" />
+    <Compile Include="IHtmlString.cs" />
     <Compile Include="TemplateParsingException.cs" />
     <Compile Include="DynamicAnonymousObject.cs" />
     <Compile Include="CompilerServiceUtility.cs" />

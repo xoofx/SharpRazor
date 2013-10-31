@@ -52,6 +52,7 @@ namespace SharpRazor
     {
         private const string DefaultNamespaceForCompiledPageTemplate = "SharpRazorDynamic";
         private readonly Dictionary<string, Type> generatedPageTemplateTypes = new Dictionary<string, Type>();
+        private readonly Dictionary<string, string> generatedPageSourcecode = new Dictionary<string, string>();
         private readonly HashSet<IRazorizerLanguageProvider> languageProviders;
         private string defaultFileExtension;
 
@@ -124,10 +125,10 @@ namespace SharpRazor
         public HashSet<string> Namespaces { get; private set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether [include debug information].
+        /// Gets or sets a value indicating whether to enable debugging of page templates from a debugger.
         /// </summary>
-        /// <value><c>true</c> if [include debug information]; otherwise, <c>false</c>.</value>
-        public bool IncludeDebugInformation { get; set; }
+        /// <value><c>true</c> to enable debugging of templates from a debugger; otherwise, <c>false</c>.</value>
+        public bool EnableDebug { get; set; }
 
         /// <summary>
         /// Gets the language providers registered.
@@ -321,10 +322,18 @@ namespace SharpRazor
             var pageTemplate = (PageTemplate)Activator.CreateInstance(pageTemplateType);
             pageTemplate.Razorizer = this;
             pageTemplate.PageName = pageTemplateName;
+
+            if (EnableDebug)
+            {
+                string sourceCode;
+                generatedPageSourcecode.TryGetValue(pageTemplateName, out sourceCode);
+                pageTemplate.PageSourceCode = sourceCode;
+            }
+
             return pageTemplate;
         }
 
-        private Type GenerateAndCompilePageTemplateType(string templateContent, string templateFileName, Type modelType, IRazorizerLanguageProvider languageProvider)
+        private Type GenerateAndCompilePageTemplateType(string templateContent, string templateFileName, Type modelType, IRazorizerLanguageProvider languageProvider, out string sourceCode)
         {
             string templateClassName;
             var result = GeneratePageTemplateCode(templateContent, templateFileName, modelType, languageProvider, out templateClassName);
@@ -340,7 +349,7 @@ namespace SharpRazor
             // Generate any constructors required by the base template type.
             GenerateConstructors(CompilerServicesUtility.GetConstructors(PageTemplateType), type, hasDynamicModel);
 
-            return CompilePageTemplateCode(templateClassName, result.GeneratedCode, languageProvider.CreateCodeDomProvider());
+            return CompilePageTemplateCode(templateClassName, result.GeneratedCode, languageProvider.CreateCodeDomProvider(), out sourceCode);
         }
 
         private GeneratorResults GeneratePageTemplateCode(string templateContent, string templateFileName, Type modelType, IRazorizerLanguageProvider languageProvider, out string templateFullClassName)
@@ -376,14 +385,13 @@ namespace SharpRazor
             }
         }
         
-        private Type CompilePageTemplateCode(string templateClassName, CodeCompileUnit codeCompileUnit, CodeDomProvider codeDomProvider)
+        private Type CompilePageTemplateCode(string templateClassName, CodeCompileUnit codeCompileUnit, CodeDomProvider codeDomProvider, out string sourceCode)
         {
             // Generate the code and put it in the text box:
-            string code;
             using (var writer = new StringWriter())
             {
                 codeDomProvider.GenerateCodeFromCompileUnit(codeCompileUnit, writer, new CodeGeneratorOptions());
-                code = writer.ToString();
+                sourceCode = writer.ToString();
             }
 
             // Filter assemblies: Remove dynamics, check location, remove duplicated versions (taking latest)
@@ -395,13 +403,13 @@ namespace SharpRazor
 
 
             // Compile an assembly in-memory
-            var compilerParameters = new CompilerParameters(assemblyNames) { GenerateInMemory = true, IncludeDebugInformation = true };
+            var compilerParameters = new CompilerParameters(assemblyNames) { GenerateInMemory = true, IncludeDebugInformation = EnableDebug };
             var results = codeDomProvider.CompileAssemblyFromDom(compilerParameters, codeCompileUnit);
 
             // Handle errors here.
             if (results.Errors.HasErrors)
             {
-                throw new TemplateCompilationException(code, results.Errors.OfType<CompilerError>().ToList());
+                throw new TemplateCompilationException(sourceCode, results.Errors.OfType<CompilerError>().ToList());
             }
 
             var assembly = results.CompiledAssembly;
@@ -473,11 +481,15 @@ namespace SharpRazor
             {
                 if (!generatedPageTemplateTypes.TryGetValue(templateName, out pageTemplateType))
                 {
+                    string sourceCode;
+
                     pageTemplateType = GenerateAndCompilePageTemplateType(templateContent, templateFileName, modelType,
-                        languageProvider);
-                    if (pageTemplateType != null)
+                        languageProvider, out sourceCode);
+
+                    generatedPageTemplateTypes.Add(templateName, pageTemplateType);
+                    if (EnableDebug)
                     {
-                        generatedPageTemplateTypes.Add(templateName, pageTemplateType);
+                        generatedPageSourcecode[templateName] = sourceCode;
                     }
                 }
             }

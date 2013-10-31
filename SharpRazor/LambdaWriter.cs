@@ -27,7 +27,7 @@ namespace SharpRazor
     /// <summary>
     /// Defines a lambda writer used by template helpers (include...etc.)
     /// </summary>
-    public class LambdaWriter
+    public class LambdaWriter : IHtmlString
     {
         private readonly Action<TextWriter> writerAction;
 
@@ -49,6 +49,11 @@ namespace SharpRazor
             }
         }
 
+        public string ToHtmlString()
+        {
+            return ToString();
+        }
+
         /// <summary>
         /// Writes this lamda to the specified <see cref="TextWriter"/>
         /// </summary>
@@ -56,6 +61,16 @@ namespace SharpRazor
         public void WriteTo(TextWriter writer)
         {
             writerAction(writer);
+        }
+
+        /// <summary>
+        /// Performs an implicit conversion from <see cref="LambdaWriter"/> to <see cref="System.String"/>.
+        /// </summary>
+        /// <param name="writer">The writer.</param>
+        /// <returns>The result of the conversion.</returns>
+        public static implicit operator string(LambdaWriter writer)
+        {
+            return writer.ToString();
         }
     }
 }

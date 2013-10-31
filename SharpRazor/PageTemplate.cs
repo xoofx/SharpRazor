@@ -21,6 +21,7 @@
 using System;
 using System.Diagnostics;
 using System.Dynamic;
+using System.Globalization;
 using System.IO;
 using System.Net;
 
@@ -42,6 +43,12 @@ namespace SharpRazor
         /// </summary>
         /// <value>The name of the page.</value>
         public string PageName { get; internal set; }
+
+        /// <summary>
+        /// Gets the page source code. Only available when <see cref="SharpRazor.Razorizer.EnableDebug"/> is set to <c>true</c>.
+        /// </summary>
+        /// <value>The page source code.</value>
+        public string PageSourceCode { get; internal set; }
 
         /// <summary>
         /// Gets or sets the currnt layout template.
@@ -235,7 +242,7 @@ namespace SharpRazor
         /// Writes the specified value to the current <see cref="Writer"/>.
         /// </summary>
         /// <param name="val">The value.</param>
-        protected virtual void Write(object val)
+        public virtual void Write(object val)
         {
             WriteTo(Writer, val);
         }
@@ -249,14 +256,14 @@ namespace SharpRazor
             if (lambdaWriter == null)
                 return;
 
-            lambdaWriter.WriteTo(Writer);
+            WriteTo(Writer, lambdaWriter);
         }
 
         /// <summary>
         /// Writes the literal to the current <see cref="Writer"/>.
         /// </summary>
         /// <param name="val">The value.</param>
-        protected virtual void WriteLiteral(object val)
+        public virtual void WriteLiteral(object val)
         {
             WriteLiteralTo(Writer, val);
         }
@@ -265,15 +272,46 @@ namespace SharpRazor
         /// Writes a value to the specified <see cref="TextWriter"/>.
         /// </summary>
         /// <param name="writer">The writer.</param>
-        /// <param name="val">The value.</param>
+        /// <param name="value">The value.</param>
         /// <exception cref="System.ArgumentNullException">writer</exception>
-        protected virtual void WriteTo(TextWriter writer, object val)
+        public virtual void WriteTo(TextWriter writer, object value)
         {
             if (writer == null) throw new ArgumentNullException("writer");
+            if (value == null) return;
 
-            if (val == null) return;
+            var htmlString = value as IHtmlString;
+            if (htmlString != null)
+            {
+                writer.Write(htmlString.ToHtmlString());
+            }
+            else
+            {
+                var text = Convert.ToString(value, CultureInfo.CurrentCulture);
+                WriteLiteralTo(writer, WebUtility.HtmlEncode(text));
+            }
+        }
 
-            WriteLiteralTo(writer, WebUtility.HtmlEncode(val.ToString()));
+        /// <summary>
+        /// Converts a raw HTML to a <see cref="HtmlRawString"/>.
+        /// </summary>
+        /// <param name="rawHtml">The raw HTML.</param>
+        /// <returns>An <see cref="HtmlRawString"/>.</returns>
+        public static HtmlRawString Raw(string rawHtml)
+        {
+            return new HtmlRawString(rawHtml);
+        }
+
+        /// <summary>
+        /// Writes a value to the specified <see cref="TextWriter" />.
+        /// </summary>
+        /// <param name="writer">The writer.</param>
+        /// <param name="lambdaWriter">The lambda writer.</param>
+        /// <exception cref="System.ArgumentNullException">writer</exception>
+        public virtual void WriteTo(TextWriter writer, LambdaWriter lambdaWriter)
+        {
+            if (writer == null) throw new ArgumentNullException("writer");
+            if (lambdaWriter == null) throw new ArgumentNullException("lambdaWriter");
+            lambdaWriter.WriteTo(writer);
         }
 
         /// <summary>
@@ -282,9 +320,10 @@ namespace SharpRazor
         /// <param name="writer">The writer.</param>
         /// <param name="val">The value.</param>
         /// <exception cref="System.ArgumentNullException">writer</exception>
-        protected virtual void WriteLiteralTo(TextWriter writer, object val)
+        public virtual void WriteLiteralTo(TextWriter writer, object val)
         {
             if (writer == null) throw new ArgumentNullException("writer");
+            if (val == null) return;
 
             writer.Write(val);
         }
@@ -312,8 +351,6 @@ namespace SharpRazor
         /// <exception cref="System.ArgumentNullException">writer</exception>
         public virtual void WriteAttributeTo(TextWriter writer, string name, PositionTagged<string> prefix, PositionTagged<string> suffix, params AttributeValue[] values)
         {
-            // TODO: Check and understand what this code is all about. Taken from https://github.com/anurse/MicroRazorHost
-
             if (writer == null) throw new ArgumentNullException("writer");
 
             bool first = true;
@@ -328,9 +365,9 @@ namespace SharpRazor
             {
                 for (int i = 0; i < values.Length; i++)
                 {
-                    AttributeValue attrVal = values[i];
-                    PositionTagged<object> val = attrVal.Value;
-                    PositionTagged<string> next = i == values.Length - 1 ?
+                    var attrVal = values[i];
+                    var val = attrVal.Value;
+                    var next = i == values.Length - 1 ?
                         suffix : // End of the list, grab the suffix
                         values[i + 1].Prefix; // Still in the list, grab the next prefix
 
