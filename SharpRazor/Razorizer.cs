@@ -52,6 +52,7 @@ namespace SharpRazor
     {
         private const string DefaultNamespaceForCompiledPageTemplate = "SharpRazorDynamic";
         private readonly Dictionary<string, Type> generatedPageTemplateTypes = new Dictionary<string, Type>();
+        private readonly Dictionary<string, PageTemplate> generatedPageTemplates = new Dictionary<string, PageTemplate>();
         private readonly Dictionary<string, string> generatedPageSourcecode = new Dictionary<string, string>();
         private readonly HashSet<IRazorizerLanguageProvider> languageProviders;
         private string defaultFileExtension;
@@ -186,13 +187,13 @@ namespace SharpRazor
         /// </remarks>
         public virtual PageTemplate FindTemplate(string templateName)
         {
-            Type pageTemplateType = null;
-            lock (generatedPageTemplateTypes)
+            PageTemplate pageTemplate = null;
+            lock (generatedPageTemplates)
             {
-                generatedPageTemplateTypes.TryGetValue(templateName, out pageTemplateType);
+                generatedPageTemplates.TryGetValue(templateName, out pageTemplate);
             }
 
-            return pageTemplateType != null ? NewPageTemplate(templateName, pageTemplateType) : TemplateResolver != null ? TemplateResolver(templateName) : null;
+            return pageTemplate ?? (TemplateResolver != null ? TemplateResolver(templateName) : null);
         }
 
         /// <summary>
@@ -323,7 +324,7 @@ namespace SharpRazor
             pageTemplate.Razorizer = this;
             pageTemplate.PageName = pageTemplateName;
 
-            if (EnableDebug)
+            if (EnableDebug && pageTemplateName != null)
             {
                 string sourceCode;
                 generatedPageSourcecode.TryGetValue(pageTemplateName, out sourceCode);
@@ -418,20 +419,6 @@ namespace SharpRazor
         
         private PageTemplate CompileOrCreatePageTemplate(string templateName, string templateContent, string templateFileName, Type modelType)
         {
-            var templateType = GetOrCompilePageTemplateType(templateName, templateContent, templateFileName, modelType);
-
-            // Should not happen but in case OnCodeGeneratorErrors is overloaded and not generating 
-            // any exception, we have to handle this here correctly
-            if (templateType == null)
-            {
-                throw new InvalidOperationException("Unable to create a template type. Check errors");
-            }
-
-            return NewPageTemplate(templateName, templateType);
-        }
-
-        private Type GetOrCompilePageTemplateType(string templateName, string templateContent, string templateFileName, Type modelType)
-        {
             if (string.IsNullOrWhiteSpace(templateFileName))
             {
                 templateFileName = templateName == null ? DefaultFileExtension : templateName + DefaultFileExtension;
@@ -455,12 +442,12 @@ namespace SharpRazor
                 if (!PageTemplateType.IsGenericTypeDefinition)
                 {
                     // If PageTemplateType is not generic, then extract the implicit model type
-                    var pageTemplateGenericType = CompilerServicesUtility.GetGenericType(PageTemplateType, typeof (PageTemplate<>));
+                    var pageTemplateGenericType = CompilerServicesUtility.GetGenericType(PageTemplateType, typeof(PageTemplate<>));
                     modelType = pageTemplateGenericType.GetGenericArguments()[0];
                 }
                 else
                 {
-                    modelType = typeof (object);
+                    modelType = typeof(object);
                 }
             }
             else if (!PageTemplateType.IsGenericTypeDefinition)
@@ -475,6 +462,27 @@ namespace SharpRazor
                 templateName = ComputeCacheKey(templateContent, templateFileName, modelType);
             }
 
+            PageTemplate pageTemplate;
+            if (!generatedPageTemplates.TryGetValue(templateName, out pageTemplate))
+            {
+                var templateType = GetOrCompilePageTemplateType(templateName, templateContent, templateFileName, modelType, languageProvider);
+
+                // Should not happen but in case OnCodeGeneratorErrors is overloaded and not generating 
+                // any exception, we have to handle this here correctly
+                if (templateType == null)
+                {
+                    throw new InvalidOperationException("Unable to create a template type. Check errors");
+                }
+
+                pageTemplate = NewPageTemplate(templateName, templateType);
+                generatedPageTemplates.Add(templateName, pageTemplate);
+            }
+
+            return pageTemplate;
+        }
+
+        private Type GetOrCompilePageTemplateType(string templateName, string templateContent, string templateFileName, Type modelType, IRazorizerLanguageProvider languageProvider)
+        {
             // Create a template type
             Type pageTemplateType;
             lock (generatedPageTemplateTypes)

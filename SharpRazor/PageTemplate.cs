@@ -72,7 +72,10 @@ namespace SharpRazor
         /// Gets the current writer when rendering this page.
         /// </summary>
         /// <value>The writer.</value>
-        public TextWriter Writer { get; private set; }
+        public TextWriter Writer
+        {
+            get { return Context.Writer; }
+        }
 
         /// <summary>
         /// This instance has a dynamic model. This is used internally.
@@ -206,17 +209,16 @@ namespace SharpRazor
 
                 // Execute this template
                 Context = context;
-                Writer = writer;
+                context.Writer = writer;
                 Execute();
-                Writer = null;
-                Context = null;
+                Context.Writer = null;
 
                 // If we are in a layout context, use the current layout
                 if (Layout != null)
                 {
                     // Get the layout template.
                     var layout = FindTemplate(Layout);
-
+                    
                     if (layout == null)
                     {
                         throw new InvalidOperationException(

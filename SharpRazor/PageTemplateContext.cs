@@ -51,6 +51,11 @@ namespace SharpRazor
             this.viewBag = viewBag ?? new ExpandoObject();
         }
 
+        /// <summary>
+        /// Gets the current writer.
+        /// </summary>
+        /// <value>The writer.</value>
+        public TextWriter Writer { get; internal set; }
 
         /// <summary>
         /// Gets the view bag.
