@@ -1,0 +1,105 @@
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" >
+    <head>
+    	<title>SharpDoc Documentation</title>
+    <link href="../syntaxhighlighter/styles/shCoreDefault.css" rel="stylesheet" type="text/css" />
+    <link href="../css/syntaxHighlighter.css" rel="stylesheet" type="text/css" />
+    <link href="../css/sharpdoc.css" rel="stylesheet" type="text/css" />
+    <script src="../js/mootools.js" language="javascript"></script>
+    <script src="../js/mootools-more.js" language="javascript"></script>
+    <script src="../syntaxhighlighter/js/shCore.js" type="text/javascript"></script>
+    <script src="../syntaxhighlighter/js/shBrushCpp.js" type="text/javascript"></script>
+    <script src="../syntaxhighlighter/js/shBrushCSharp.js" type="text/javascript"></script>
+    <script src="../syntaxhighlighter/js/shBrushJScript.js" type="text/javascript"></script>
+    <script src="../syntaxhighlighter/js/shBrushVb.js" type="text/javascript"></script>
+    <script type="text/javascript" language="javascript">
+        SyntaxHighlighter.defaults['gutter'] = false;
+        SyntaxHighlighter.defaults['smart-tabs'] = false;
+        SyntaxHighlighter.all();
+    </script>
+    <script src="../js/sharpdoc.js" language="javascript"></script>            
+    <meta name="Microsoft.Help.Id" content="main.md" />
+    <meta name="Microsoft.Help.SelfBranded" content="true" />
+    <meta name="Microsoft.Help.Locale" content="en-us" />
+    <meta name="Microsoft.Help.F1" content="SharpDoc Documentation" />
+    <meta name="Microsoft.Help.Category" content="TargetOS:Windows" />
+    <meta name="Microsoft.Help.Category" content="DevLang:VB" />
+    <meta name="Microsoft.Help.Category" content="DevLang:CSharp" />
+    <meta name="Microsoft.Help.Category" content="DevLang:FSharp" />
+        <meta name="Microsoft.Help.TocParent" content="-1" />
+        <meta name="Microsoft.Help.TocOrder" content="-1" />  
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+
+    </head>
+	<body>
+        <script type="text/javascript" language="javascript">
+            if(window == window.top)
+                location.href = "index.htm?page=main";
+            document.addEvent('domready', function () {
+                InstallCodeTabs();
+            });
+    </script>
+    <div class="sharpdoc">
+        <div class="content">
+            
+      
+<div class="content-title">
+	<h1 class="content-title">SharpDoc Documentation</h1>   
+</div>
+<div style="clear: both;"></div> 
+<p><strong>SharpRazor</strong> is a <em>lightweight templating system</em> based on the powerful <em>Razor</em> templating stack.</p>
+
+<h2>Usage</h2>
+
+<pre><code>var razorizer = new Razorizer();
+var result = razorizer.Parse("&lt;p&gt;Hello @Model.Name!&lt;/p&gt;", new { Name = "Razor" });
+</code></pre>
+
+<p>Output:</p>
+
+<pre><code>&lt;p&gt;Hello Razor!&lt;/p&gt;
+</code></pre>
+
+<h2>Features</h2>
+
+<p><strong>SharpRazor</strong> provides the following features:</p>
+
+<ul>
+<li>Simple and easy interface, with a single entry point <a target='mainFrame' onclick='hightLightTopic("T_SharpRazor_Razorizer");' href="T_SharpRazor_Razorizer.htm" >Razorizer</a> class and mainly two methods:
+<ul>
+<li><code>Razorizer.Parse</code> to directly parse a template </li>
+<li><code>Razorizer.Compile</code> to precompile template page</li>
+</ul></li>
+<li>C# Code Language and HTML Markup Language (aka <code>cshtml</code> files)</li>
+<li><a target='mainFrame' onclick='hightLightTopic("");' href="http://weblogs.asp.net/scottgu/archive/2010/10/19/asp-net-mvc-3-new-model-directive-support-in-razor.aspx" >MVC3 Model</a> aka <code>@model</code> directive </li>
+<li><a target='mainFrame' onclick='hightLightTopic("");' href="http://weblogs.asp.net/scottgu/archive/2010/10/22/asp-net-mvc-3-layouts.aspx" >MVC3 Layout</a> and <a target='mainFrame' onclick='hightLightTopic("");' href="http://weblogs.asp.net/scottgu/archive/2010/12/30/asp-net-mvc-3-layouts-and-sections-with-razor.aspx" >Sections</a></li>
+<li>Caching of generated page template types</li>
+<li>Custom page template class inheriting from <a target='mainFrame' onclick='hightLightTopic("T_SharpRazor_PageTemplate_1");' href="T_SharpRazor_PageTemplate_1.htm" >PageTemplate&lt;TModel&gt;</a></li>
+<li>Allow debugging of template code (breakpoints, step-in...etc. from VS debugger) when loading template from a location on the disk (By specifying a <code>templateFilePath</code>).</li>
+<li>Very lightweight, packed into an assembly weighting less than <em>40Kb</em> (without counting <code>System.Web.Razor</code> dependency)</li>
+<li>Compatible with <code>.NET 4.5+</code> and <code>System.Web.Razor 3.0</code></li>
+</ul>
+
+<h2>Available from Nuget</h2>
+
+<p>You can download <strong>SharpRazor</strong> binaries directly from <a target='mainFrame' onclick='hightLightTopic("");' href="http://www.nuget.org/packages?q=sharprazor" >nuget</a>.</p>
+
+<h2>License</h2>
+
+<p>MIT</p>
+        </div>
+    </div>
+
+	</body>
+</html>                                                                                
